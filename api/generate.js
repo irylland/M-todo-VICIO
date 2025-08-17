@@ -1,0 +1,73 @@
+
+#### **Passo 2: Atualize o Código da API (`/api/generate.js`)**
+
+Vamos substituir o código em `/api/generate.js` por uma versão mais moderna e à prova de falhas. Esta nova versão usa o **modo JSON nativo** da IA do Gemini, o que evita erros de formatação na resposta.
+
+Copie e cole este código aprimorado no seu arquivo `/api/generate.js`:
+
+```javascript
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Inicializa o cliente da IA com a chave de ambiente
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
+// Configura a função para rodar no ambiente "Edge" da Vercel, que é mais rápido para APIs
+export const config = {
+  runtime: 'edge',
+};
+
+// A função principal que lida com as requisições
+export default async function handler(req) {
+  // Permite apenas o método POST
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Método não permitido' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    // Pega a observação do corpo da requisição
+    const { observation } = await req.json();
+
+    if (!observation) {
+      return new Response(JSON.stringify({ error: 'Observação não fornecida' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Configura o modelo da IA para responder SEMPRE em formato JSON
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    // O prompt, agora mais direto
+    const prompt = `
+      Você é um especialista no método de feedback "VÍCIO". Baseado na observação (Ver) do usuário, gere as 4 etapas restantes.
+      O resultado DEVE ser um objeto JSON com as chaves "instigar", "confrontar", "impactar", e "orientar".
+
+      Observação do usuário (VER): "${observation}"
+    `;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    
+    // A resposta já vem como um texto JSON, então apenas a repassamos para o front-end
+    return new Response(responseText, {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    // Se algo der errado, registra o erro no log da Vercel para podermos ver
+    console.error("ERRO NA FUNÇÃO DA API:", error);
+    return new Response(JSON.stringify({ error: 'Falha ao gerar o feedback com a IA.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
