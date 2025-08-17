@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Feedback VÍCIO 2.0</title>
+    <style>
+        /* O CSS continua o mesmo da versão 2.0, não precisa mudar */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        :root { --glow-color: hsl(26, 100%, 55%); }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: #0c0a09; color: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; background-image: radial-gradient( 800px circle at var(--mouse-x) var(--mouse-y), rgba(255, 107, 0, 0.15), transparent 40% ); transition: background 0.2s; }
+        .container { max-width: 700px; width: 100%; background: rgba(23, 23, 23, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 30px 40px; box-shadow: 0 0 80px rgba(0,0,0,0.3); }
+        h1 { color: #f8fafc; text-align: center; margin-bottom: 10px; text-shadow: 0 0 5px var(--glow-color); }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; }
+        .input-group { margin-bottom: 25px; }
+        label { display: block; font-weight: 500; margin-bottom: 10px; color: #cbd5e1; }
+        textarea { width: 100%; padding: 14px; background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; font-size: 16px; font-family: 'Inter', sans-serif; resize: vertical; min-height: 80px; color: #e2e8f0; transition: border-color 0.3s, box-shadow 0.3s; }
+        textarea:focus { outline: none; border-color: var(--glow-color); box-shadow: 0 0 15px rgba(255, 107, 0, 0.4); }
+        button { width: 100%; padding: 15px; background: var(--glow-color); color: #0c0a09; border: none; border-radius: 8px; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 0 20px rgba(255, 107, 0, 0.5); }
+        button:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(255, 107, 0, 0.8); }
+        button:disabled { background: #4b5563; box-shadow: none; cursor: not-allowed; }
+        #results { margin-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px; }
+        .result-card { background: rgba(30, 41, 59, 0.3); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); padding: 20px; margin-bottom: 15px; border-radius: 8px; border-left: 4px solid var(--glow-color); box-shadow: 0 0 15px rgba(255, 107, 0, 0.2); transition: transform 0.3s; }
+        .result-card:hover { transform: scale(1.02); }
+        .result-card h2 { margin-top: 0; color: #f1f5f9; font-size: 20px; }
+        .result-card p { font-size: 16px; line-height: 1.6; color: #cbd5e1; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gerador de Feedback VÍCIO 🧠</h1>
+        <p class="subtitle">Transforme observações em conversas de crescimento.</p>
+        <div class="input-group">
+            <label for="verInput">Passo 1: Descreva o comportamento observado (V - VER)</label>
+            <textarea id="verInput" rows="4" placeholder="Ex: Notei que você recusou entrar no projeto novo."></textarea>
+        </div>
+        <button id="generateBtn">Gerar Feedback VÍCIO</button>
+        <div id="results" class="hidden">
+            <div class="result-card"><h2>I – INSTIGAR</h2><p id="instigarOutput"></p></div>
+            <div class="result-card"><h2>C – CONFRONTAR</h2><p id="confrontarOutput"></p></div>
+            <div class="result-card"><h2>I – IMPACTAR</h2><p id="impactarOutput"></p></div>
+            <div class="result-card"><h2>O – ORIENTAR</h2><p id="orientarOutput"></p></div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('mousemove', e => {
+            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateBtn = document.getElementById('generateBtn');
+            const verInput = document.getElementById('verInput');
+            const resultsDiv = document.getElementById('results');
+            const instigarP = document.getElementById('instigarOutput');
+            const confrontarP = document.getElementById('confrontarOutput');
+            const impactarP = document.getElementById('impactarOutput');
+            const orientarP = document.getElementById('orientarOutput');
+
+            generateBtn.addEventListener('click', async () => {
+                const userInput = verInput.value.trim();
+                if (!userInput) {
+                    alert('Por favor, descreva um comportamento na primeira caixa de texto.');
+                    return;
+                }
+                
+                generateBtn.textContent = 'Gerando...';
+                generateBtn.disabled = true;
+                resultsDiv.classList.add('hidden');
+
+                try {
+                    // **A MÁGICA ACONTECE AQUI**
+                    // Chamando nossa função no back-end
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ observation: userInput })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erro da API: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Preenchendo os campos com a resposta REAL da IA
+                    instigarP.textContent = data.instigar || "Não foi possível gerar a sugestão.";
+                    confrontarP.textContent = data.confrontar || "Não foi possível gerar a sugestão.";
+                    impactarP.textContent = data.impactar || "Não foi possível gerar a sugestão.";
+                    orientarP.textContent = data.orientar || "Não foi possível gerar a sugestão.";
+
+                    resultsDiv.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error("Erro ao gerar feedback:", error);
+                    alert("Ocorreu um erro ao tentar gerar o feedback. Tente novamente.");
+                } finally {
+                    generateBtn.textContent = 'Gerar Novo Feedback';
+                    generateBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
